@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MatrixMultiplier
 {
-  internal class MultiTaskMatrixMultiplier : IMatrixMultiplier
+  public class MultiTaskMatrixMultiplier : IMatrixMultiplier
   {
     private Matrix result;
     private List<Task> TaskList;
@@ -25,7 +25,7 @@ namespace MatrixMultiplier
 
     public Matrix MultiplyMatrices(Matrix a, Matrix b)
     {
-      if (a.Rows != b.Cols)
+      if (a.Rows != b.Cols || a.Cols != b.Rows)
       {
         throw new ArgumentException("Matrices can not be multiplied");
       }
