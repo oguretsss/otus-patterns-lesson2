@@ -30,14 +30,23 @@ namespace MatrixMultiplier
         throw new ArgumentException("Matrices can not be multiplied");
       }
       Console.WriteLine("Multiplying...");
-      result = new Matrix(a.Rows, b.Cols);
+
+      // Create local copy of both matrices to ensure that we work with same data during the test
+      mut.WaitOne();
+      Matrix aLocalCopy = new Matrix(a.Rows, a.Cols);
+      aLocalCopy.ProcessFunctionOverData((i, j) => aLocalCopy[i, j] = a[i, j]);
+      Matrix bLocalCopy = new Matrix(b.Rows, b.Cols);
+      bLocalCopy.ProcessFunctionOverData((i, j) => bLocalCopy[i, j] = b[i, j]);
+      mut.ReleaseMutex();
+
+      result = new Matrix(aLocalCopy.Rows, bLocalCopy.Cols);
       for (var i = 0; i < result.Rows; i++)
       {
         for (var j = 0; j < result.Cols; j++)
         {
           var c = i;
           var d = j;
-          TaskList.Add(Task.Run(() => CalcResultCell(c, d, a, b)));
+          TaskList.Add(Task.Run(() => CalcResultCell(c, d, aLocalCopy, bLocalCopy)));
         }
       }
       Task.WaitAll(TaskList.ToArray());
@@ -50,19 +59,11 @@ namespace MatrixMultiplier
 
     private void CalcResultCell(int i, int j, Matrix a, Matrix b)
     {
-      // Create local copy of both matrices to ensure that we work with same data during the test
-      mut.WaitOne();
-      Matrix aLocalCopy = new Matrix(a.Rows, a.Cols);
-      aLocalCopy.ProcessFunctionOverData((i, j) => aLocalCopy[i, j] = a[i, j]);
-      Matrix bLocalCopy = new Matrix(b.Rows, b.Cols);
-      bLocalCopy.ProcessFunctionOverData((i, j) => bLocalCopy[i, j] = b[i, j]);
-      mut.ReleaseMutex();
-
       // Perform calculations
       double res = 0;
-      for (var k = 0; k < aLocalCopy.Cols; k++)
+      for (var k = 0; k < a.Cols; k++)
       {
-        res += aLocalCopy[i, k] * bLocalCopy[k, j];
+        res += a[i, k] * b[k, j];
         Thread.Sleep(200);
         Console.Write(".");
       }
